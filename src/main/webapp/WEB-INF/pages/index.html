@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Start page</title>
+</head>
+<body>
+<div th:align="center">
+  <br>
+  <br>
+  <form th:action="@{/login}">
+    <button type="submit">ВОЙТИ</button>
+  </form>
+  <br>
+  <form th:action="@{/registration}">
+    <button type="submit">РЕГИСТРАЦИЯ</button>
+  </form>
+  <br>
+  <form th:action="@{/logout}">
+    <button type="submit">ВЫХОД</button>
+  </form>
+</div>
+</body>
+</html>
