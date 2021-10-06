@@ -2,59 +2,47 @@ package web.model;
 
 import org.springframework.security.core.GrantedAuthority;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
+import java.util.ArrayList;
 import java.util.List;
 
+// Этот класс реализует интерфейс GrantedAuthority, в котором необходимо переопределить только один метод getAuthority() (возвращает имя роли).
+// Имя роли должно соответствовать шаблону: «ROLE_ИМЯ», например, ROLE_USER.
 @Entity
-@Table(name = "role")
-public class Role implements GrantedAuthority {
-    @Id
-    @Column(name = "role_id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @Column(name = "role")
-    private String role;
+@Table(name = "roles")
+public class Role extends AbstractEntity implements GrantedAuthority {
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name = "user_roles",
-            joinColumns = @JoinColumn(name = "role_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private List<User> user;
+    @Column(unique = true)
+    private String name;
 
-    public Role(String role) {
-        this.role = role;
-    }
+    @ManyToMany(mappedBy = "roles")
+    private List<User> users = new ArrayList<>();
 
     public Role() {
     }
 
-    public Role(Long id) {
-        this.id = id;
+    public Role(String name) {
+        this.name = name;
     }
 
-    public Role(Long id, String role) {
-        this.id = id;
-        this.role = role;
+    public String getName() {
+        return name;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override
     public String getAuthority() {
-        return role;
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Role [id = %d; name = %s;]", id, name);
     }
 }

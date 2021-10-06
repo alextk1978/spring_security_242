@@ -1,65 +1,105 @@
 package web.model;
 
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
-import java.util.Collection;
-import java.util.Set;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
+import java.util.*;
 
 @Entity
-@Table(name = "user")
-public class User implements UserDetails {
+@Table(name = "users", indexes = {@Index(columnList = "name, last_name ASC")})
+public class User extends AbstractEntity implements UserDetails {
 
-    @Id
-    @Column(name = "user_id", nullable = false)
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
-
-    @Column(name = "username")
-    private String username;
-
-    @Column(name = "firstname")
+    @Column(name = "name")
+    @NotEmpty(message = "Name should not be empty")
+    @Size(min = 2, max = 30, message = "Name should be between 2 to 30")
     private String firstName;
 
-    @Column(name = "lastname")
+    @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "age")
-    private int age;
+    @Column(unique = true)
+    @NotEmpty(message = "Email should not be empty")
+    @Email(message = "Email should be valid")
+    private String email;
 
-    @Column(name = "password")
+    @NotEmpty(message = "Password should not be empty")
     private String password;
 
+    private boolean enabled;
+
+    @ManyToMany(cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
+    @JoinTable(name = "users_roles")
+    private Set<Role> roles = new HashSet<>();
+
     public User() {
+
     }
 
-    @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> role;
+    public String getFirstName() {
+        return firstName;
+    }
 
-    public User(long id, String username, String firstName, String lastName, int age, String password, Set<Role> role) {
-        this.id = id;
-        this.username = username;
+    public void setFirstName(String firstName) {
         this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
         this.lastName = lastName;
-        this.age = age;
+    }
+
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
         this.password = password;
-        this.role = role;
     }
 
-    public long getId() {
-        return id;
+    public boolean hasRole(int roleId) {
+        if (null == roles|| 0 == roles.size()) {
+            return false;
+        }
+        Optional<Role> findRole = roles.stream().filter(role -> roleId == role.getId()).findFirst();
+        return findRole.isPresent();
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public boolean hasRole(String roleName) {
+        if (null == roles|| 0 == roles.size()) {
+            return false;
+        }
+        Optional<Role> findRole = roles.stream().filter(role -> roleName.equals(role.getName())).findFirst();
+        return findRole.isPresent();
     }
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles;
+    }
+
+    @Override
     public String getUsername() {
-        return username;
+        return email;
     }
 
     @Override
@@ -79,87 +119,24 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public Set<Role> getRoles() {
+        return roles;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return this.role;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public Set<Role> getRole() {
-        return role;
-    }
-
-    public void setRole(Set<Role> role) {
-        this.role = role;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        User user = (User) o;
-
-        if (getId() != user.getId()) return false;
-        if (getAge() != user.getAge()) return false;
-        if (getUsername() != null ? !getUsername().equals(user.getUsername()) : user.getUsername() != null)
-            return false;
-        if (getFirstName() != null ? !getFirstName().equals(user.getFirstName()) : user.getFirstName() != null)
-            return false;
-        if (getLastName() != null ? !getLastName().equals(user.getLastName()) : user.getLastName() != null)
-            return false;
-        if (getPassword() != null ? !getPassword().equals(user.getPassword()) : user.getPassword() != null)
-            return false;
-        return getRole() != null ? getRole().equals(user.getRole()) : user.getRole() == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = (int) (getId() ^ (getId() >>> 32));
-        result = 31 * result + (getUsername() != null ? getUsername().hashCode() : 0);
-        result = 31 * result + (getFirstName() != null ? getFirstName().hashCode() : 0);
-        result = 31 * result + (getLastName() != null ? getLastName().hashCode() : 0);
-        result = 31 * result + getAge();
-        result = 31 * result + (getPassword() != null ? getPassword().hashCode() : 0);
-        result = 31 * result + (getRole() != null ? getRole().hashCode() : 0);
-        return result;
+    public String toString() {
+        return String.format("User [id = %d; firstName = %s; lastName = %s; email = %s; password = %s; enabled = %s; roles = (%s)]",
+                id, firstName, lastName, email, password, isEnabled(), Collections.singletonList(roles));
     }
 }
